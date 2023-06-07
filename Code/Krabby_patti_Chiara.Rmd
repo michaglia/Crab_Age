@@ -1,0 +1,28 @@
+```{r}
+mod<-lm(Age~.,data=ds1)
+summary(mod)
+``````{r}
+#vif(mod)
+sqrt(vif(mod))>2
+#Il fattore di inflazione della varianza (VIF) è una misura della quantità di  multicollinearità  in un insieme di  variabili di regressione multiple . Matematicamente, il VIF per una variabile del modello di regressione è uguale al rapporto tra la varianza complessiva del modello   e la varianza di un modello che include solo quella singola variabile indipendente. Questo rapporto è calcolato per ogni variabile indipendente. Un VIF elevato indica che la variabile indipendente associata è altamente allineata con le altre variabili nel modello.
+```
+#BEST SUBSET REGRESSION
+
+```{r}
+#Model selection by exhaustive search, forward or backward stepwise, or sequential replacement
+regfit.full=regsubsets(Age~.,data=ds1, nvmax=8)
+reg.summary=summary(regfit.full)
+reg.summary
+
+```
+
+```{r}
+#choose the best subset based on the cp parameter  
+which.min(reg.summary$cp)
+plot(reg.summary$cp,xlab="Number of Variables",ylab="Cp")
+points(7,reg.summary$cp[7],pch=20,col="red")
+
+plot(regfit.full,scale="Cp")
+```
+##the analysis take to the result that the variable lenght can be delated from the model, 
+#because it has no meaningfull correlation in the regression
