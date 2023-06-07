@@ -35,8 +35,8 @@ ggplot(gather(select(ds1, -c("Sex"))), aes(value)) +
 ```
 
 ```{r}
-#we look at the null values
-sum(is.na(ds1))
+#we look if there are NA values
+cat("NULL values count:",sum(is.null(ds1)),"\nNA values count:", sum(is.na(ds1)))
 ```
 
 #### Outlier removal
