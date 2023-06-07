@@ -1,4 +1,4 @@
-# Music_Mental_Health
+# Crab Age Prediction
 Statistical learning group project.
 
 The authors of the project are:
