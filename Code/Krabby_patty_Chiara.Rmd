@@ -1,10 +1,11 @@
 ```{r}
 library(car)
 library(leaps)
+library(randomForest)
 ```
 
 ```{r}
-mod<-lm(Age~.-Sex-Sex_F,data=ds1)
+mod<-lm(Age~.-Sex-Sex_F-Sex_M,data=ds1)
 summary(mod)
 ```
 
@@ -13,6 +14,7 @@ summary(mod)
 sqrt(vif(mod))>5
 #Il fattore di inflazione della varianza (VIF) è una misura della quantità di  multicollinearità  in un insieme di  variabili di regressione multiple . Matematicamente, il VIF per una variabile del modello di regressione è uguale al rapporto tra la varianza complessiva del modello   e la varianza di un modello che include solo quella singola variabile indipendente. Questo rapporto è calcolato per ogni variabile indipendente. Un VIF elevato indica che la variabile indipendente associata è altamente allineata con le altre variabili nel modello.
 ```
+
 #BEST SUBSET REGRESSION
 
 ```{r}
@@ -32,5 +34,42 @@ points(7,reg.summary$cp[7],pch=20,col="red")
 plot(regfit.full,scale="Cp")
 ```
 
-The analysis take to the result that the variable lenght and sex_F can be delated from the model, 
-because they have no meaningfull correlation with Age in the regression.
+The analysis take to the result that the variable length and sex_F can be delated from the model, because they have no meaningfull correlation with Age in the regression.
+
+Delate length and sex_M and Sex_F from the dataset
+
+```{r}
+ds1$Sex_M<-NULL
+ds1$Sex_F<-NULL
+ds1$Length<-NULL
+ds1$Sex<-NULL
+```
+
+Divide the dataset in training set and test set
+
+```{r}
+train <- sample (1: nrow (ds1), nrow (ds1) / 2)
+ds1.test <- ds1[-train , "Age"]
+Age.test<-Age[-train]
+```
+
+RANDOM FOREST
+
+```{r}
+set.seed(1)
+bag.krabby=randomForest(Age~.,data=ds1,subset=train,mtry=7,importance=TRUE)
+bag.krabby
+```
+
+```{r}
+yhat.bag <- predict(bag.krabby,newdata = ds1[-train , ])
+plot (yhat.bag , ds1.test)
+abline (0, 1)
+mean ((yhat.bag - ds1.test)^2)
+```
+
+the test set MSE associated with the regression tree is 2.813337
+
+The square root of the MSE is therefore around 1.677301 indicating that this
+model leads to test predictions that are (on average) within approximately
+\$1.677301 of the true median home value for the census tract
