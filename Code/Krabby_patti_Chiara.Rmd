@@ -1,6 +1,13 @@
 ```{r}
+library(car)
+library(leaps)
+```
+
+```{r}
 mod<-lm(Age~.,data=ds1)
 summary(mod)
+```
+
 ``````{r}
 #vif(mod)
 sqrt(vif(mod))>2
