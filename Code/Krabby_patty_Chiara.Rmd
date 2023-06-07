@@ -4,7 +4,7 @@ library(leaps)
 ```
 
 ```{r}
-mod<-lm(Age~.-Sex-Sex_F-Sex_M,data=ds1)
+mod<-lm(Age~.-Sex-Sex_F,data=ds1)
 summary(mod)
 ```
 
