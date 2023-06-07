@@ -1,11 +1,13 @@
 ```{r}
 library(tidyverse)
+library(reshape2)
 ```
 
 ```{r}
 ds1=read.csv("https://raw.githubusercontent.com/guber25/Crab_Age/main/Dataset/Crab_age.csv")
 #https://www.kaggle.com/datasets/sidhus/crab-age-prediction
 or_dim=dim(ds1)[1]
+ds1[,1] <- as.factor(ds1[,1])
 ```
 
 ### WHAT TO DO:
@@ -69,3 +71,21 @@ cat(((or_dim-dim(ds1)[1])/or_dim)*100,"%")
 ```
 
 Due to outliers, we have lost 9.86% of the data.
+
+```{r}
+
+```
+
+```{r}
+#Correlation matrix
+ds1 %>% select(-Sex) %>% cor() %>% melt() %>% #here I am creating the correlation matrix between each other variable (excluding Sex) and "melting" it to creating a data frame which will be used to then create the ggplot 
+  ggplot(aes(x=Var2, y=Var1, fill=value)) + 
+    geom_tile() +
+    geom_text(aes(Var1, Var2, label = round(value, 2)), size = 3, color="white") +
+      scale_fill_gradient2(low = "blue", high = "red",
+                         limit = c(-1,1), name="Correlation") +
+    theme(axis.text.x = element_text(angle = 45, vjust = .5), 
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.background = element_blank())
+```
