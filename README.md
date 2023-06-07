@@ -4,9 +4,9 @@ Statistical learning group project.
 The authors of the project are:
 - Chiara Anni (https://github.com/chiaraanni)
 - Guglielmo Berzano (me)
-- Alessandro Cantoni (no account on Github)
+- Alessandro Cantoni (https://github.com/AleCantoni117)
 - Michela Mazzaglia (https://github.com/michaglia)
-- Matteo Matone (no account on Github)
+- Matteo Matone (https://github.com/maton098)
 - Riccardo Sturla (https://github.com/RiccardoSturla)
 We are all students of the Data Science for Economics master's degree at Università degli Studi di Milano Statale.
 
