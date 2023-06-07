@@ -1,0 +1,71 @@
+```{r}
+library(tidyverse)
+```
+
+```{r}
+ds1=read.csv("https://raw.githubusercontent.com/guber25/Crab_Age/main/Dataset/Crab_age.csv")
+#https://www.kaggle.com/datasets/sidhus/crab-age-prediction
+or_dim=dim(ds1)[1]
+```
+
+### WHAT TO DO:
+
+-   exploratory analysis: bella zi dai lo sapete, boxplots, histograms
+
+-   linear regression -\> significatività delle variabili, collinearity
+
+-   classification -\> regressione logistica e altri modelli che possono andare bene, fare alcuni test -\>confusion matrix
+
+-   Unsupervised: k-means clustering ? :-D
+
+```{r}
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_histogram(bins = 10) + 
+    facet_wrap(~key, scales = 'free') 
+```
+
+```{r}
+glimpse(ds1)
+```
+
+```{r}
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_boxplot() + 
+    facet_wrap(~key, scales = 'free')
+```
+
+```{r}
+#we look at the null values
+sum(is.na(ds1))
+```
+
+#### Outlier removal
+
+```{r}
+# OUTLIER REMOVAL (substituting outliers with NA)
+for (i in 1:3) {
+for (x in ds1 %>% select(-"Sex") %>% names())
+{
+  value = ds1[,x][ds1[,x] %in% boxplot.stats(ds1[,x])$out]
+  ds1[,x][ds1[,x] %in% value] = NA
+  ds1 = drop_na(ds1)
+} }
+head(ds1)
+```
+
+```{r}
+#Check if there are no more NA values
+as.data.frame(colSums(is.na(ds1)))
+```
+
+```{r}
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_boxplot() + 
+    facet_wrap(~key, scales = 'free')
+```
+
+```{r}
+cat(((or_dim-dim(ds1)[1])/or_dim)*100,"%")
+```
+
+Due to outliers, we have lost 9.86% of the data.
