@@ -38,34 +38,43 @@ The analysis take to the result that the variable length and sex_F can be delate
 
 Delate length and sex_M and Sex_F from the dataset
 
+
+Replicate the dataset
 ```{r}
-ds1$Sex_M<-NULL
-ds1$Sex_F<-NULL
-ds1$Length<-NULL
-ds1$Sex<-NULL
+ds2<-ds1
+```
+
+Delate length and sex_M and Sex_F from the dataset
+
+```{r}
+ds2$Sex_M<-NULL
+ds2$Sex_F<-NULL
+ds2$Length<-NULL
+ds2$Sex<-NULL
 ```
 
 Divide the dataset in training set and test set
 
 ```{r}
-train <- sample (1: nrow (ds1), nrow (ds1) / 2)
-ds1.test <- ds1[-train , "Age"]
-Age.test<-Age[-train]
+
+train <- sample (1: nrow (ds2), nrow (ds2) / 2)
+ds2.test <- ds2[-train , "Age"]
+Age.test<-ds2$Age[-train]
 ```
 
 RANDOM FOREST
 
 ```{r}
 set.seed(1)
-bag.krabby=randomForest(Age~.,data=ds1,subset=train,mtry=7,importance=TRUE)
+bag.krabby=randomForest(Age~.,data=ds2,subset=train,mtry=7,importance=TRUE)
 bag.krabby
 ```
 
 ```{r}
-yhat.bag <- predict(bag.krabby,newdata = ds1[-train , ])
-plot (yhat.bag , ds1.test)
+yhat.bag <- predict(bag.krabby,newdata = ds2[-train , ])
+plot (yhat.bag , ds2.test)
 abline (0, 1)
-mean ((yhat.bag - ds1.test)^2)
+mean ((yhat.bag - ds2.test)^2)
 ```
 
 the test set MSE associated with the regression tree is 2.813337
