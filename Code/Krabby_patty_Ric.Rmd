@@ -1,0 +1,174 @@
+---
+title: "Crab regressions"
+output: html_notebook
+---
+```{r}
+#linear regression with all the regressors and vif to check multicollinearity
+lm.fit = lm(Age~.-Sex_F-Sex, data=ds1) #we exclude one dummy to avoid dummy variable trap
+summary(lm.fit)
+library(car)
+vif(lm.fit)
+```
+```{r}
+sqrt(vif(lm.fit)) > 5 # check if sqrt vif>5
+```
+
+```{r}
+#trying log-linear regression to see if it is better
+lm.fitlog = lm(log(Age)~.-Sex_F-Sex, data=ds1)
+summary(lm.fitlog)
+vif(lm.fitlog)
+sqrt(vif(lm.fitlog)) > 2
+```
+
+
+```{r}
+step.model = lm(Age~., data=ds2)
+summary(step.model)
+```
+## Check residuals for outliers
+
+```{r}
+# check on outliers
+summary(step.model$residuals)
+```
+```{r}
+shapiro.test(step.model$residuals) # to test if residuals are normally distributed
+```
+```{r}
+library(ggpubr)
+ggqqplot(step.model$residuals)
+```
+```{r}
+ds2$fit<-step.model$fitted.values
+ds2$res<-step.model$residuals
+ggdensity(ds2, x = "res", fill = "lightgray", title = "Residuals") +
+  stat_overlay_normal_density(color = "red", linetype = "dashed")
+```
+
+
+```{r}
+library(olsrr)
+ols_plot_resid_stand(step.model)
+```
+```{r}
+ols_plot_resid_stud(step.model)
+#if values > 3 -> outliers
+```
+
+
+```{r}
+ols_plot_resid_stud_fit(step.model)
+```
+
+```{r}
+#Bar Plot of cook's distance to detect observations that strongly influence fitted values of the model.
+library(olsrr) 
+ols_plot_cooksd_bar(step.model)
+```
+
+#Ridge Model
+
+```{r}
+library(glmnet)
+x=model.matrix(Age~.-Sex-Sex_F,data=ds1) 
+y=ds1$Age
+fit.ridge=glmnet(x,y,alpha=0)
+plot(fit.ridge,xvar="lambda",label=TRUE)
+```
+```{r}
+cv.ridge=cv.glmnet(x,y,alpha=0)
+plot(cv.ridge)
+```
+```{r}
+coef(cv.ridge)
+```
+```{r}
+#check best value for lambda (min cv error)
+bestlambda=cv.ridge$lambda.min
+bestlambda
+```
+#split in training set and test set to compute MSE for ridge
+
+```{r}
+ridge.tr=glmnet(x[train,],y[train], alpha=0)
+```
+
+```{r}
+predi=predict(ridge.tr,x[-train,])
+```
+
+```{r}
+rmse= sqrt(apply((y[-train]-predi)^2,2,mean))
+plot(log(ridge.tr$lambda),rmse,type="b",xlab="Log(lambda)")
+```
+
+
+```{r}
+lam.best=ridge.tr$lambda[order(rmse)[1]]
+lam.best
+```
+
+```{r}
+coef(ridge.tr,s=lam.best)
+```
+
+```{r} 
+#obtain test MSE with best lambda
+ridge.pred=predict(ridge.tr, s=lam.best, newx=x[test,])
+mean((ridge.pred-y.test)^2)
+```
+
+#Lasso Model
+
+```{r}
+fit.lasso=glmnet(x,y, alpha=1)
+plot(fit.lasso,xvar="lambda",label=TRUE)
+```
+
+```{r}
+cv.lasso=cv.glmnet(x,y)
+plot(cv.lasso)
+```
+
+```{r}
+coef(cv.lasso)
+```
+# -> lasso does variables selection
+
+```{r}
+#split to see best lambda
+lasso.tr=glmnet(x[train,],y[train])
+#lasso.tr
+```
+
+```{r}
+pred=predict(lasso.tr,x[-train,])
+rmse= sqrt(apply((y[-train]-pred)^2,2,mean))
+plot(log(lasso.tr$lambda),rmse,type="b",xlab="Log(lambda)")
+```
+
+```{r}
+#best lambda
+lamb.best=lasso.tr$lambda[order(rmse)[1]]
+lamb.best
+```
+
+```{r}
+#coeff with best lambda
+coef(lasso.tr,s=lamb.best)
+```
+# -> no coefficient = 0
+
+```{r}
+#obtain test MES with best lambda
+lasso.pred=predict(lasso.tr, s=lam.best, newx=x[test,])
+mean((lasso.pred-y.test)^2)
+```
+
+
+
+
+
+
+
