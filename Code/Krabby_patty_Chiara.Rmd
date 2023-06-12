@@ -82,3 +82,13 @@ the test set MSE associated with the regression tree is 2.813337
 The square root of the MSE is therefore around 1.677301 indicating that this
 model leads to test predictions that are (on average) within approximately
 \$1.677301 of the true median home value for the census tract
+
+```{r}
+importance(bag.krabby)
+varImpPlot(bag.krabby)
+```
+
+The results indicate that across all of the trees considered in the random
+forest, Shucked Weight and Shell Weight are by
+far the two most important variables.
+
