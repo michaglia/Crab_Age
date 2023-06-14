@@ -1,0 +1,326 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+library(tidyverse)
+library(reshape2)
+```
+
+```{r}
+ds1=read.csv("https://raw.githubusercontent.com/guber25/Crab_Age/main/Dataset/Crab_age.csv")
+#https://www.kaggle.com/datasets/sidhus/crab-age-prediction
+or_dim=dim(ds1)[1]
+ds1[,1] <- as.factor(ds1[,1])
+```
+
+```{r}
+Sex_M=ifelse(ds1$Sex=="M",yes = 1, 0)
+Sex_F=ifelse(ds1$Sex=="F",yes = 1, 0)
+Sex_I=ifelse(ds1$Sex=="I",yes = 1, 0)
+ds1$Sex_M=Sex_M
+ds1$Sex_F=Sex_F
+ds1$Sex_I=Sex_I
+```
+
+```{r}
+View(ds1)
+```
+
+```{r}
+#We try to find some correlation between the variables. Clearly some correlation is present but there are many outliers.
+plot(ds1)
+```
+
+### WHAT TO DO:
+
+-   exploratory analysis: bella zi dai lo sapete, boxplots, histograms
+
+-   linear regression -\> significatività delle variabili, collinearity
+
+-   classification -\> regressione logistica e altri modelli che possono
+    andare bene, fare alcuni test -\>confusion matrix
+
+-   Unsupervised: k-means clustering ? :-D
+
+```{r}
+#In this way we look at the distribution of the variables and we see, again, the presence of outliers and of skewed distribution
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_histogram(bins = 10) + 
+    facet_wrap(~key, scales = 'free') 
+```
+
+```{r}
+glimpse(ds1)
+```
+
+```{r}
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_boxplot() + 
+    facet_wrap(~key, scales = 'free')
+```
+
+```{r}
+#we look if there are NULL values or NA values
+cat("NULL values count:",sum(is.null(ds1)),"\nNA values count:", sum(is.na(ds1)))
+```
+
+#### Outlier removal
+
+```{r}
+# OUTLIER REMOVAL (substituting outliers with NA)
+for (i in 1:3) {
+for (x in ds1 %>% select(-"Sex") %>% names())
+{
+  value = ds1[,x][ds1[,x] %in% boxplot.stats(ds1[,x])$out]
+  ds1[,x][ds1[,x] %in% value] = NA
+  ds1 = drop_na(ds1)
+} }
+head(ds1)
+```
+
+```{r}
+#Check if there are no more NA values
+as.data.frame(colSums(is.na(ds1)))
+```
+
+```{r}
+#as the plots show, there are no more outliers
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_boxplot() + 
+    facet_wrap(~key, scales = 'free')
+```
+
+```{r}
+cat(((or_dim-dim(ds1)[1])/or_dim)*100,"%")
+```
+
+Due to the removal of outliers, we have lost 9.86% of the data.
+
+```{r}
+# We see how outlier removal impacted distributions
+ggplot(gather(select(ds1, -c("Sex"))), aes(value)) + 
+    geom_histogram(bins = 10) + 
+    facet_wrap(~key, scales = 'free')
+```
+
+```{r}
+#Now correlations are much more stable
+plot(ds1)
+```
+
+```{r}
+#Correlation matrix
+ds1 %>% select(-Sex) %>% cor() %>% melt() %>% #here I am creating the correlation matrix between each other variable (excluding Sex) and "melting" it to creating a data frame which will be used to then create the ggplot 
+  ggplot(aes(x=Var2, y=Var1, fill=value)) + 
+    geom_tile() +
+    geom_text(aes(Var1, Var2, label = round(value, 2)), size = 3, color="white") +
+      scale_fill_gradient2(low = "12123220", high = "darkblue",
+                         limit = c(-1,1), name="Correlation") +
+    theme(axis.text.x = element_text(angle = 45, vjust = .5), 
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.background = element_blank())
+
+```
+
+# ^~[Explanatory Data Analysis]{.smallcaps}~^
+
+-   upload all the libraries
+
+```{r}
+library(stats) 
+library(ggplot2) 
+library(plyr) 
+library(dplyr) 
+library (cluster) 
+install.packages("corrplot") 
+library(corrplot) 
+install.packages("NbClust") 
+library(NbClust) 
+install.packages("factoextra") 
+library(factoextra)
+```
+
+-   description of the dataset
+
+    ```{r}
+    dim(ds1) 
+    ds3 <- ds1 
+    ds3$Sex <- NULL 
+    ds3$Sex_M <- NULL 
+    str(ds3) 
+    summary(ds3) 
+    summary(is.na(ds3)) # there are no missing values
+    ```
+
+-   visualizing the data
+
+    ```{r}
+    ggplot(ds3, aes(Age, Weight)) + geom_point(alpha = 0.25) + xlab("Age") + ylab("Weight")
+    ```
+
+-   correlation matrix
+
+    ```{r}
+    cor.result <- cor(ds3) 
+    corrplot(cor.result, method="ellipse") + title(main = "Correlation")
+    ```
+
+## we can see from here that most of the variables are almost correlated with each other
+
+# K-means Clustering
+
+```{r}
+ds3 <- select(ds3, -Age)
+```
+
+-   we need to scale our data now
+
+    ```{r}
+    df <- as.data.frame(scale(ds3)) 
+    summary(df)
+    ```
+
+-   Let's look for the optimal number of clusters
+
+#### Elbow method
+
+```{r}
+set.seed(102) 
+fviz_nbclust(df, kmeans, method = "wss") + labs(subtitle = "Elbow method") 
+# we see that the optimal is 2
+```
+
+### Silhouette method
+
+```{r}
+fviz_nbclust(df, kmeans, method = "silhouette")+ labs(subtitle = "Silhouette method")
+# also here we see that he optimal is 2
+```
+
+### Gap statistic
+
+nboot = 50 to keep the function speedy
+
+recommended value: nboot= 500 for your analysis
+
+Use verbose = FALSE to hide computing progression
+
+```{r}
+set.seed(10) 
+fviz_nbclust(df, kmeans, iter.max = 7, nstart = 20, method = "gap_stat", nboot = 500)+ labs(subtitle = "Gap statistic method")
+# cannot be used anymore
+```
+
+2 clusters is selected based on the tests (2 out of 2 tests) above.
+
+Next, we visualise the clusters with triangle mark as the centroid.
+
+```{r}
+set.seed(111)
+kmean2.simple <- kmeans(df,centers=2, iter.max = 25, nstart=100)
+df$cluster <- factor(kmean2.simple$cluster)
+summary(df)
+```
+
+```{r}
+ggplot(data=df, aes(x=Height, y=Length, colour=cluster))+geom_point()+geom_point(data=as.data.frame(kmean2.simple$centers), color ="black", size=4, shape =17)
+```
+
+```{r}
+ggplot(data=df, aes(x=Weight, y=Length, colour=cluster))+geom_point()+geom_point(data=as.data.frame(kmean2.simple$centers), color ="black", size=4, shape =17)
+```
+
+```{r}
+set.seed(123)
+
+# Perform k-means clustering
+km.res <- kmeans(ds3, 2, nstart = 25)
+my_palette <- c("orange", "blue")
+# Visualize the clustering results
+library("factoextra")
+fviz_cluster(km.res, data = ds3,
+             geom = "point",
+             ellipse.type = "convex",
+             palette = "my_palette",
+             ggtheme = theme_minimal())
+```
+
+```{r}
+```
+
+# Evaluation and Interpretation
+
+1.  Internal cluster validation: we need to evaluate the goodness of the
+    clustering structure without reference to external information
+
+    ```{r}
+    df <- select(df, -Sex_F, -Sex_I)
+    # we need to drop Sex_F and Sex_I columns since they are binary
+    ```
+
+    ```{r}
+    D<- daisy(df)
+    plot(silhouette(kmean2.simple$cluster, D),col=1:2, border = NA)
+    ```
+
+    ##### Above plot show the following:
+
+    1.  Cluster 1: 0.71 (Good as it is close to 1)
+
+    2.  Cluster 2: 0.69 (Good as it is close to 1)
+
+    The internal cluster quality evaluation is good as shown in the
+    plot.
+
+2.  External cluster validation: we need to compare the results of our
+    cluster analysis to an externally known result. It measures the
+    extent to which cluster labels match externally supplied class
+    labels.
+
+```{r}
+set.seed(111)
+install.packages("fpc")
+
+```
+
+```{r}
+library("fpc")
+# Compute cluster stats
+species <- as.numeric(kmean2.simple$cluster)
+clust_stats <- cluster.stats(d = dist(df), 
+                             species, kmean2.simple$cluster)
+# Corrected Rand index
+clust_stats$corrected.rand
+```
+
+```{r}
+# Meila’s variation index VI
+clust_stats$vi
+```
+
+The corrected Rand index provides a measure for assessing the similarity
+between two partitions, adjusted for chance. Its range is -1 (no
+agreement) to 1 (perfect agreement).
+
+```{r}
+set.seed(111)
+kmean2.simple
+```
+
+```{r}
+## checking betweenss i.e. the inter cluster distance between cluster
+kmean2.simple$betweenss
+```
+
+# Findings
+
+1.  1659 and 1850 observations respectively. A ration of 47% to 52%.
+2.  Cluster 1 is higher than cluster 2 based on the centroid mean.
+3.  Intra cluster bond strength factor Cluster 1: 6578.707 Cluster 2:
+    7547.571
+4.  Goodness of the classification k-means: 55.3% (slightly good fit)
+5.  Between Clusters: 17445.72
